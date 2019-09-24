@@ -1,5 +1,6 @@
 //this is a demo file of the global build.gradle file
 //作为全局build.gradle文件的一个demo文件，可以直接拷贝使用
+//如果发布到本地了，那么需要添加本地maven地址才能依赖
 buildscript {
     repositories {
         google()

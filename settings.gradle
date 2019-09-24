@@ -1,2 +1,2 @@
-include ':app', ':my-json'
+include ':app', ':my-json', ':my-java'
 rootProject.name='MavenPublish'

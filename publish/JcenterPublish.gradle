@@ -35,6 +35,14 @@ def siteUrl = project.siteUrl
 def gitUrl = (hasGitUrl && isNotEmpty(project.gitUrl)) ? project.gitUrl : siteUrl
 def issuesUrl = (hasIssueUrl && isNotEmpty(project.issuesUrl)) ? project.issuesUrl : siteUrl + "/issues"
 
+System.err.println("************************* Upload Info *****************************")
+println "dependency  >> implementation \"" + group + ":" + libraryName + ":" + version + "\""
+println "siteUrl      : " + siteUrl
+println "gitUrl       : " + gitUrl
+println "issuesUrl    : " + issuesUrl
+println "libraryDesc  : " + libraryDesc
+System.err.println("*******************************************************************")
+
 install {
     repositories.mavenInstaller {
         // This generates POM.xml with proper parameters
@@ -43,6 +51,7 @@ install {
                 packaging 'aar'
                 // Add your description here
                 name libraryDesc    //项目描述
+                artifactId = libraryName
                 url siteUrl
                 // Set your license
                 licenses {
@@ -67,13 +76,22 @@ install {
         }
     }
 }
-task sourcesJar(type: Jar) {
-    from android.sourceSets.main.java.srcDirs
-    classifier = 'sources'
-}
-task javadoc(type: Javadoc) {
-    source = android.sourceSets.main.java.srcDirs
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+
+if (project.hasProperty("android")) { // Android libraries
+    task sourcesJar(type: Jar) {
+        classifier = 'sources'
+        from android.sourceSets.main.java.srcDirs
+    }
+
+    task javadoc(type: Javadoc) {
+        source = android.sourceSets.main.java.srcDirs
+        classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    }
+} else { // Java libraries
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
 }
 task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
@@ -101,7 +119,8 @@ bintray {
     configurations = ['archives']
     pkg {
         repo = "maven"
-        name = libraryName    //发布到JCenter上的项目名字
+        //发布到JCenter上的项目名字，注意这个name不在依赖语句中 依赖语句规则为:group:artifactId:version
+        name = libraryName
         websiteUrl = siteUrl
         vcsUrl = gitUrl
         licenses = ["Apache-2.0"]
