@@ -1,32 +1,12 @@
-buildscript {
-    dependencies {
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
-    }
-}
-allprojects {
-    gradle.projectsEvaluated {
-        tasks.withType(JavaCompile) {
-            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
-        }
-    }
-}
-
-allprojects {
-    tasks.withType(Javadoc) {
-        options {
-            encoding "UTF-8"
-            charSet 'UTF-8'
-            links "http://docs.oracle.com/javase/7/docs/api"
-        }
-    }
-}
-
-apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'android-maven'
 apply plugin: 'com.jfrog.bintray'
 
 static def isEmpty(String text) {
     return text == null || text.length() == 0
+}
+
+static def isNotEmpty(String text) {
+    return !isEmpty(text)
 }
 
 //此处的group与version直接定义到gradle.properties中，
@@ -39,16 +19,21 @@ if (isEmpty(project.GROUP) || isEmpty(project.VERSION)) {
 group = project.GROUP
 // 发布库的版本号
 version = project.VERSION
+boolean hasLibName = project.hasProperty("libraryName")
+boolean hasLibDesc = project.hasProperty("libraryDesc")
+boolean hasSiteUrl = project.hasProperty("siteUrl")
+boolean hasGitUrl = project.hasProperty("gitUrl")
+boolean hasIssueUrl = project.hasProperty("issuesUrl")
 
-def libraryName = isEmpty(project.libraryName) ? project.name : project.libraryName
-def projectDesc = ""
+def libraryName = (hasLibName && isNotEmpty(project.libraryName)) ? project.libraryName : project.name
+def libraryDesc = (hasLibDesc && isNotEmpty(project.libraryDesc)) ? project.libraryDesc : project.name
 
-def siteUrl = project.siteUrl
-if (isEmpty(siteUrl)) {
+if (!hasSiteUrl || isEmpty(project.siteUrl)) {
     throw new IllegalArgumentException("The site url of the library is empty")
 }
-def gitUrl = isEmpty(project.gitUrl) ? siteUrl : project.gitUrl
-def issuesUrl = isEmpty(project.issuesUrl) ? siteUrl + "/issues" : project.issuesUrl
+def siteUrl = project.siteUrl
+def gitUrl = (hasGitUrl && isNotEmpty(project.gitUrl)) ? project.gitUrl : siteUrl
+def issuesUrl = (hasIssueUrl && isNotEmpty(project.issuesUrl)) ? project.issuesUrl : siteUrl + "/issues"
 
 install {
     repositories.mavenInstaller {
@@ -57,7 +42,7 @@ install {
             project {
                 packaging 'aar'
                 // Add your description here
-                name projectDesc    //项目描述
+                name libraryDesc    //项目描述
                 url siteUrl
                 // Set your license
                 licenses {

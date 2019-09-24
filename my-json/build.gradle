@@ -32,5 +32,8 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
 
-    implementation 'com.google.code.gson:gson:2.8.5'
+    //此处如果使用api，那么在添加依赖的工程中将可以引用到Gson库，
+    //如果使用implementation，那么在添加依赖的工程中需要手动添加Gson的依赖才能使用
+    api 'com.google.code.gson:gson:2.8.5'
 }
+apply from: "../BintrayPublish.gradle"
