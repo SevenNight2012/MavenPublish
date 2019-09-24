@@ -1,0 +1,126 @@
+buildscript {
+    dependencies {
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
+    }
+}
+allprojects {
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        }
+    }
+}
+
+allprojects {
+    tasks.withType(Javadoc) {
+        options {
+            encoding "UTF-8"
+            charSet 'UTF-8'
+            links "http://docs.oracle.com/javase/7/docs/api"
+        }
+    }
+}
+
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+
+static def isEmpty(String text) {
+    return text == null || text.length() == 0
+}
+
+//此处的group与version直接定义到gradle.properties中，
+//注意要大写，因为gradle的project对象本身自带了group和version属性
+if (isEmpty(project.GROUP) || isEmpty(project.VERSION)) {
+    throw new IllegalArgumentException("The GROUP or VERSION is empty")
+}
+
+// 发布库的组织名称
+group = project.GROUP
+// 发布库的版本号
+version = project.VERSION
+
+def libraryName = isEmpty(project.libraryName) ? project.name : project.libraryName
+def projectDesc = ""
+
+def siteUrl = project.siteUrl
+if (isEmpty(siteUrl)) {
+    throw new IllegalArgumentException("The site url of the library is empty")
+}
+def gitUrl = isEmpty(project.gitUrl) ? siteUrl : project.gitUrl
+def issuesUrl = isEmpty(project.issuesUrl) ? siteUrl + "/issues" : project.issuesUrl
+
+install {
+    repositories.mavenInstaller {
+        // This generates POM.xml with proper parameters
+        pom {
+            project {
+                packaging 'aar'
+                // Add your description here
+                name projectDesc    //项目描述
+                url siteUrl
+                // Set your license
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id 'xuxingchen'
+                        name 'xuxingchen'
+                        email 'xuxingchen2016@gmail.com'
+                    }
+                }
+                scm {
+                    connection gitUrl
+                    developerConnection gitUrl
+                    url siteUrl
+                }
+            }
+        }
+    }
+}
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+//设置编码为UTF-8
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+//JavaDoc任务配置，防止因为doc任务异常退出
+tasks.withType(Javadoc) {
+    options.addStringOption('Xdoclint:none', '-quiet')
+    options.addStringOption('encoding', 'UTF-8')
+    options.addStringOption('charSet', 'UTF-8')
+}
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+bintray {
+    //此处的开发者上传信息保存在环境变量中，省的每次创建新的工程时都要去复制一遍
+    user = System.getenv("bintray_user")
+    key = System.getenv("bintray_apiKey")
+    configurations = ['archives']
+    pkg {
+        repo = "maven"
+        name = libraryName    //发布到JCenter上的项目名字
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        licenses = ["Apache-2.0"]
+        issueTrackerUrl = issuesUrl
+        publish = true
+    }
+}
