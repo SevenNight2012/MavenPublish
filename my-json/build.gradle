@@ -36,4 +36,4 @@ dependencies {
     //如果使用implementation，那么在添加依赖的工程中需要手动添加Gson的依赖才能使用
     api 'com.google.code.gson:gson:2.8.5'
 }
-apply from: rootProject.file("publish/PublishConfig.gradle")
+apply from: "https://raw.githubusercontent.com/SevenNight2012/MyScript/master/publish/PublishConfig.gradle"
